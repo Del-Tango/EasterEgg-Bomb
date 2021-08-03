@@ -1,0 +1,46 @@
+#!/bin/bash -x
+#
+# Regards, the Alveare Solutions society
+#
+# EASTER EGG BOMB
+
+declare -A EE_DEFAULT
+declare -A EASTER_EGGS
+
+PROJECT_DIR="$(
+    cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd
+)"
+CONFIG_FILE_PATH="${PROJECT_DIR}/conf/ee-bomb.conf"
+
+if [ -f "$CONFIG_FILE_PATH" ]; then
+    source $CONFIG_FILE_PATH
+else
+    echo "[ WARNING ]: No config file found! ($CONFIG_FILE_PATH)"
+    exit 1
+fi
+
+SUCCESS_COUNT=0
+FAILURE_COUNT=0
+
+for easter_egg in ${!EASTER_EGGS[@]}; do
+    echo "[ INFO ]: Processing easter egg... ($easter_egg)"
+    for location in ${TARGET_LOCATIONS[@]}; do
+        if [ ! -d $location ]; then
+            echo "[ WARNING ]: Directory not found! ($location)"
+            continue
+        fi
+        mv "${EASTER_EGGS[$easter_egg]}" "${location}/${easter_egg}" &> /dev/null
+        if [ $? -ne 0 ]; then
+            echo "[ WARNING ]: Could not move easter egg ($easter_egg) to location!"\
+                "(${location})"
+            FAILURE_COUNT=$((FAILURE_COUNT + 1))
+        else
+            echo -n "$easter_egg, "
+            SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+        fi
+    done
+done
+
+echo "[ DONE ]: ($SUCCESS_COUNT) New files created! ($FAILURE_COUNT) failures."
+
+exit $FAILURE_COUNT
